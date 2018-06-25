@@ -1,4 +1,4 @@
-package src.main.java;
+package ar.com.manusofar;
 
 import javax.swing.JFrame;
 import java.awt.BorderLayout;
