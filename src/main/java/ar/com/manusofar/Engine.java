@@ -1,4 +1,4 @@
-package src.main.java;
+package ar.com.manusofar;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
