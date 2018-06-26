@@ -15,7 +15,7 @@ public class Ide extends JFrame {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Ide ide = new Ide();
-		ide.setSize(300, 300);
+		ide.setSize(640, 640);
 		ide.setVisible(true);
 		ide.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		//ide.addKeyListener(ide);

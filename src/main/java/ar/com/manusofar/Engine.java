@@ -4,17 +4,23 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.JPanel;
 
 public class Engine extends JPanel implements KeyListener, Runnable {
 
-	float fPlayerX = 8.0f;
-	float fPlayerY = 8.0f;
+	float fPlayerX = 2.0f;
+	float fPlayerY = 2.0f;
 	float fPlayerA = 0.0f;
 	float fOldAngle = 0.01f;
 
@@ -25,10 +31,11 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 
 	float fDepth = 16.0f;
 
-	int nFactor = 30; // Cuantas líneas horizontales por columna
+	int nFactorX = 50; // Cuantas líneas horizontales por columna
+	int nFactorY = 30;
 
-	int screenWidth = width * nFactor;
-	int screenHeight = height * nFactor;
+	int screenWidth = width * nFactorX;
+	int screenHeight = height * nFactorY;
 
 	String mapa = "";
 
@@ -38,14 +45,16 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 	long lTime1, lTime2;
 	
 	float techos[] = new float[screenWidth];
-	
+	boolean bBoundary = false;
+	float fWallHeight = 3.5f;
+	float fStepSize = 0.025f;
 
 	Thread render;
 
 	public Engine() {
 		mapa =  "################";
-		mapa += "#              #";
-		mapa += "#              #";
+		mapa += "#               ";
+		mapa += "#               ";
 		mapa += "#              #";
 		mapa += "#        #     #";
 		mapa += "#       #      #";
@@ -60,7 +69,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		mapa += "#              #";
 		mapa += "################";
 
-		this.setSize(width * nFactor, height * nFactor);
+		this.setSize(width * nFactorX, height * nFactorY);
 		this.setVisible(true);
 		this.addKeyListener(this);
 
@@ -70,6 +79,9 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		
 		lTime1 = System.nanoTime();
 		lTime2 = System.nanoTime();
+		
+		float[] color = Color.RGBtoHSB(138, 137, 137, null);
+		System.out.println("Color -> [ " + color[0] + ", " + color[1] + ", " + color[2] + " ]");
 		
 		//render.start();
 		
@@ -97,12 +109,14 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		boolean bHitWall = false;
 
 		int screenWidth, screenHeight;
-		screenWidth = width * nFactor;
-		screenHeight = height * nFactor;
+		screenWidth = width * nFactorX;
+		screenHeight = height * nFactorY;
 
 		Graphics2D big2d = (Graphics2D) level.getGraphics();
 		big2d.clearRect(0, 0, screenWidth, screenHeight);
-		big2d.setStroke(new BasicStroke(1.0f));
+		//RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		//big2d.setRenderingHints(rh);
+		big2d.setStroke(new BasicStroke(0.5f));
 		// if (fPlayerA != fOldAngle) {
 		// fOldAngle = fPlayerA;
 		//float fDistanceToWall = 0.0f;
@@ -110,9 +124,10 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		int separacion = 0;
 		for (int x = 0; x < screenWidth; x++) {
 			float fDistanceToWall = 0.0f;
-			float fRayAngle = (fPlayerA - fFOV / 2.0f) + ((float) x / (float) screenWidth) * fFOV;
-			System.out.println("fRayAngle: " + fRayAngle);
-			float fStepSize = 0.1f;
+			//float fRayAngle = (fPlayerA - fFOV / 2.0f) + ((float) x / (float) screenWidth) * fFOV;
+			float fRayAngle = (float) (fPlayerA + Math.atan((2.0f*(float)x/(float)screenWidth-1.0f)* Math.tan(fFOV/2.0f)));
+			//System.out.println("fRayAngle: " + fRayAngle);
+			//fStepSize = 0.025f;
 			// fDistanceToWall = 0.0f;
 
 			float fEyeX = (float) Math.sin(fRayAngle);
@@ -120,7 +135,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			bHitWall = false;
 			while (!bHitWall && fDistanceToWall < fDepth) {
 				fDistanceToWall += fStepSize;
-
+				bBoundary = false;
 				int nTestX = (int) (fPlayerX + fEyeX * fDistanceToWall);
 				int nTestY = (int) (fPlayerY + fEyeY * fDistanceToWall);		
 				
@@ -130,74 +145,99 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 				} else {
 					if (mapa.charAt(nTestY * width + nTestX) == '#') {
 						bHitWall = true;
+						
+						
+						//Busco las esquinas para resaltarlas
+						
+						List<Point2D> esquinas = new LinkedList<>();
+						
+						for (int tx = 0; tx < 2; tx++) {
+							for (int ty = 0; ty < 2; ty++) {
+								// Angle of corner to eye
+								float vy = (float)nTestY + ty - fPlayerY;
+								float vx = (float)nTestX + tx - fPlayerX;
+								float d = (float)Math.sqrt(vx*vx + vy*vy); 
+								float dot = (fEyeX * vx / d) + (fEyeY * vy / d);
+								Point2D punto = new Point2D.Float(d,dot);
+								esquinas.add(punto);
+							}
+						}
+						
+						Collections.sort(esquinas, new Comparator<Point2D>() { 
+							public int compare(Point2D p1, Point2D p2) {
+								return Double.compare(p1.getX(), p2.getX()); 	
+							}
+						});
+							
+						float fBound = 0.001f;
+						if (Math.acos(esquinas.get(0).getY()) < fBound) bBoundary = true;
+						if (Math.acos(esquinas.get(1).getY()) < fBound) bBoundary = true;
+						if (Math.acos(esquinas.get(2).getY()) < fBound) bBoundary = true;
 					}
 				}
 			}
 			
 						
-			int nCeiling = (int)(screenHeight / 2.0f - screenHeight / fDistanceToWall);
-			int nFloor = screenHeight - nCeiling;
+			//int nCeiling = (int)(screenHeight / 2.0f - screenHeight / fDistanceToWall);
+			float fDistance = ((fEyeX*(float)Math.sin(fPlayerA))+(fEyeY*(float)Math.cos(fPlayerA))) * fDistanceToWall;
+			float nCeiling = (((float)screenHeight/fWallHeight)*(1.0f- 1.0f/fDistance));
+			float nFloor = screenHeight - nCeiling;
 			techos[x] = nCeiling;
-//			for (int y = 0; y < screenHeight; y++) {
-//				// for (int n=0; n<screenWidth; n++) {
-//
-//				if (y <= nCeiling) {
-//					Line2D ceiling = new Line2D.Float(x, y, x, y);
-//					big2d.setColor(Color.BLUE);
-//					big2d.draw(ceiling);
-//				}
-//				if (y > nCeiling && y <= nFloor) {
-//					Line2D wall = new Line2D.Float(x, y, x, y);
-//					Color cWallColor;
-////					if (fDistanceToWall <= fDepth / 4.0f) {					
-////						cWallColor = Color.getHSBColor(0, 0, 0.25f);
-////					} else if (fDistanceToWall < fDepth / 3.0f) {
-////						cWallColor = Color.getHSBColor(0, 0, 0.50f);
-////					} else if (fDistanceToWall < fDepth / 2.0f) {
-////						cWallColor = Color.getHSBColor(0, 0, 0.75f);
-////					} else {
-////						cWallColor = Color.getHSBColor(0, 0, 1.0f);
-////					}
-//					cWallColor = Color.getHSBColor(0.0f, 0.0f, ((float)fDistanceToWall/1000.0f));
-//					
-//					big2d.setColor(cWallColor);
-//					big2d.draw(wall);
-//				} else {
-//					Line2D floor = new Line2D.Float(x, y, x, y);
-//					big2d.setColor(Color.white);
-//					big2d.draw(floor);
-//				}
-//			}
+
 			
 			Line2D ceiling = new Line2D.Float(x,0,x,nCeiling);
 			Line2D wall = new Line2D.Float(x,nCeiling,x,nFloor);
-			Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
+			
+			//Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
 			
 			big2d.setColor(Color.BLUE);
 			big2d.draw(ceiling);
-			big2d.setColor(Color.darkGray);
-			big2d.draw(wall);
-			big2d.setColor(Color.GREEN);
-			big2d.draw(floor);
+			if (!bBoundary){
+				if (fDistanceToWall <= fDepth / 4.0f ) { //Very close
+					big2d.setColor(Color.white);
+				} else if (fDistanceToWall < fDepth / 3.0f) { 
+					big2d.setColor(Color.lightGray);
+				} else if (fDistanceToWall < fDepth / 2.0f) {
+					big2d.setColor(Color.gray);
+				} else if (fDistanceToWall < fDepth ){
+					big2d.setColor(Color.darkGray);
+				} else {
+					big2d.setColor(Color.black);
+				}
+			} else {
+				big2d.setColor(Color.black);
+			}
 			
+			big2d.draw(wall);
+			//big2d.setColor(Color.GREEN);
+			//big2d.draw(floor);
+			for (int y=(int)nFloor; y<screenHeight; y++ ) {
+				float b = 1.0f - (((float)y -screenHeight/2.0f) / ((float)screenHeight / 2.0f));
+				if (b < 0.25) {
+					big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 1.0f));
+				} else if (b < 0.5) {
+					big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.70f));
+				} else if (b < 0.75) {
+					big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.60f));
+				} else if (b < 0.9) {
+					big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.50f));
+				} else {
+					big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.40f));
+				}
+				big2d.drawLine(x, y, x, y);
+			}
 			
 			
 		}
-		//repaint();
-
-		//Graphics2D g2d = (Graphics2D) this.getGraphics();
-		//big2d.drawImage(level, 0, 0, screenWidth, screenHeight, this);
-		
-//		System.out.println("Altura techos:");
-//		for (int i=0; i<techos.length; i++) {
-//			System.out.print(techos[i]+ " | ");				
-//		}
-				
 		
 		
 		Graphics2D g2d = (Graphics2D) g;
+		//RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		//g2d.setRenderingHints(rh);
 		g2d.drawImage(level, 0, 0, null);
 	}
+	
+
 
 	private void update() {
 
@@ -225,13 +265,38 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			this.setPlayerAngle(this.getPlayerAngle() + 0.05f );
 		}
 		if (e.getKeyCode() == 87) { //W
-			fPlayerX += (float)(Math.sin(fPlayerA)) * 0.5f ;
-			fPlayerY += (float)(Math.cos(fPlayerA)) * 0.5f ;
+			fPlayerX += (float)(Math.sin(fPlayerA)) * 0.25f ;
+			fPlayerY += (float)(Math.cos(fPlayerA)) * 0.25f ;
+			if (mapa.charAt((int)fPlayerY * width + (int)fPlayerX) == '#') {
+				fPlayerX -= (float)(Math.sin(fPlayerA)) * 0.25f ;
+				fPlayerY -= (float)(Math.cos(fPlayerA)) * 0.25f ;
+			}
+			
 		}
 		if (e.getKeyCode() == 83) { //S
-			fPlayerX -= (float)(Math.sin(fPlayerA)) * 0.5f ;
-			fPlayerY -= (float)(Math.cos(fPlayerA)) * 0.5f ;
+			fPlayerX -= (float)(Math.sin(fPlayerA)) * 0.25f ;
+			fPlayerY -= (float)(Math.cos(fPlayerA)) * 0.25f ;
+			if (mapa.charAt((int)fPlayerY * width + (int)fPlayerX) == '#') {
+				fPlayerX += (float)(Math.sin(fPlayerA)) * 0.25f ;
+				fPlayerY += (float)(Math.cos(fPlayerA)) * 0.25f ;
+			}			
 		}
+		if (e.getKeyCode() == 107) { //Numpad +
+			fFOV += 0.1;
+		}
+		if (e.getKeyCode() == 109) { //Numpad -
+			fFOV -= 0.1;
+		}
+		if (e.getKeyCode() == 106) { //Numpad *
+			fStepSize += 0.01;
+		}
+		if (e.getKeyCode() == 111) { //Numpad /
+			fStepSize -= 0.01;
+		}
+		System.out.println("FOV: " + fFOV);
+		System.out.println("fStepSize: " + fStepSize);
+		
+		System.out.println(e.getKeyCode());
 		repaint();
 	    //System.out.println(e.getKeyCode());
 		//render.start();
@@ -322,8 +387,8 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			boolean bHitWall = false;
 
 			int screenWidth, screenHeight;
-			screenWidth = width * nFactor;
-			screenHeight = height * nFactor;
+			screenWidth = width * nFactorX;
+			screenHeight = height * nFactorY;
 
 			Graphics2D big2d = (Graphics2D) level.getGraphics();
 			big2d.clearRect(0, 0, screenWidth, screenHeight);
