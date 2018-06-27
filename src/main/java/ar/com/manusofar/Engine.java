@@ -19,8 +19,8 @@ import javax.swing.JPanel;
 
 public class Engine extends JPanel implements KeyListener, Runnable {
 
-	float fPlayerX = 2.0f;
-	float fPlayerY = 2.0f;
+	float fPlayerX = 1.0f;
+	float fPlayerY = 1.0f;
 	float fPlayerA = 0.0f;
 	float fOldAngle = 0.01f;
 
@@ -48,24 +48,26 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 	boolean bBoundary = false;
 	float fWallHeight = 3.5f;
 	float fStepSize = 0.025f;
-
+	float fSampleX = 0.0f;
+	
+	
 	Thread render;
 
 	public Engine() {
 		mapa =  "################";
-		mapa += "#               ";
-		mapa += "#               ";
-		mapa += "#              #";
-		mapa += "#        #     #";
-		mapa += "#       #      #";
-		mapa += "#      #       #";
-		mapa += "#              #";
-		mapa += "#         #    #";
 		mapa += "#    #     #   #";
-		mapa += "#           #  #";
-		mapa += "#              #";
-		mapa += "#     ###      #";
-		mapa += "#  ######      #";
+		mapa += "#### # ####### #";
+		mapa += "# #            #";
+		mapa += "# ###########  #";
+		mapa += "# #     #      #";
+		mapa += "# ####  #  #####";
+		mapa += "## #       #   #";
+		mapa += "#  ######  ##  #";
+		mapa += "#  #       #   #";
+		mapa += "#  # #######  ##";
+		mapa += "#  # #   #     #";
+		mapa += "#  #   #   #   #";
+		mapa += "#  ##########  #";
 		mapa += "#              #";
 		mapa += "################";
 
@@ -173,6 +175,24 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 						if (Math.acos(esquinas.get(0).getY()) < fBound) bBoundary = true;
 						if (Math.acos(esquinas.get(1).getY()) < fBound) bBoundary = true;
 						if (Math.acos(esquinas.get(2).getY()) < fBound) bBoundary = true;
+						
+						float fBlockMidX = (float)nTestX + 0.5f;
+						float fBlockMidY = (float)nTestY + 0.5f;
+
+						float fTestPointX = fPlayerX + fEyeX * fDistanceToWall;
+						float fTestPointY = fPlayerY + fEyeY * fDistanceToWall;
+
+						float fTestAngle = (float)Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
+
+						if (fTestAngle >= -3.14159f * 0.25f && fTestAngle < 3.14159f * 0.25f)
+							fSampleX = fTestPointY - (float)nTestY;
+						if (fTestAngle >= 3.14159f * 0.25f && fTestAngle < 3.14159f * 0.75f)
+							fSampleX = fTestPointX - (float)nTestX;
+						if (fTestAngle < -3.14159f * 0.25f && fTestAngle >= -3.14159f * 0.75f)
+							fSampleX = fTestPointX - (float)nTestX;
+						if (fTestAngle >= 3.14159f * 0.75f || fTestAngle < -3.14159f * 0.75f)
+							fSampleX = fTestPointY - (float)nTestY;
+						
 					}
 				}
 			}
@@ -193,6 +213,20 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			big2d.setColor(Color.BLUE);
 			big2d.draw(ceiling);
 			if (!bBoundary){
+				
+				for (int y=(int)nCeiling; y<nFloor; y++) {
+					
+					if (fDistanceToWall < fDepth) {
+						float fSampleY = ((float)y - (float)nCeiling) / ((float)nFloor - (float)nCeiling);
+						//System.out.println("fSampleX: " + fSampleX + " | fSampleY: " + fSampleY);
+					} else {
+						//big2d.setColor(Color.black);
+					}
+					//big2d.drawLine(x, y, x, y);
+					
+				}
+				
+				
 				if (fDistanceToWall <= fDepth / 4.0f ) { //Very close
 					big2d.setColor(Color.white);
 				} else if (fDistanceToWall < fDepth / 3.0f) { 
@@ -296,7 +330,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		System.out.println("FOV: " + fFOV);
 		System.out.println("fStepSize: " + fStepSize);
 		
-		System.out.println(e.getKeyCode());
+		//System.out.println(e.getKeyCode());
 		repaint();
 	    //System.out.println(e.getKeyCode());
 		//render.start();
