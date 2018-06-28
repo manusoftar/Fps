@@ -266,20 +266,10 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			float nFloor = screenHeight - nCeiling;
 			techos[x] = nCeiling;
 
-<<<<<<< HEAD
-			
-			Line2D ceiling = new Line2D.Float(x,0,x,nCeiling);
-			Line2D wall = new Line2D.Float(x,nCeiling,x,nFloor);
-			
-			//Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
-			
-=======
+
 			Line2D ceiling = new Line2D.Float(x, 0, x, nCeiling);
 			Line2D wall = new Line2D.Float(x, nCeiling, x, nFloor);
 
-			// Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
-
->>>>>>> origin/master
 			big2d.setColor(Color.black);
 			big2d.draw(ceiling);
 			bBoundary = false;
