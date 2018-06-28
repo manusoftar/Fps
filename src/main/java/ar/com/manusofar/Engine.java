@@ -190,7 +190,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			
 			//Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
 			
-			big2d.setColor(Color.BLUE);
+			big2d.setColor(Color.black);
 			big2d.draw(ceiling);
 			if (!bBoundary){
 				if (fDistanceToWall <= fDepth / 4.0f ) { //Very close
