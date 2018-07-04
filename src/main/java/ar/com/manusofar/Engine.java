@@ -14,28 +14,30 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JPanel;
 
 public class Engine extends JPanel implements KeyListener, Runnable {
 
-	float fPlayerX = 1.0f;
-	float fPlayerY = 1.0f;
+	float fPlayerX = 2.0f;
+	float fPlayerY = 2.0f;
 	float fPlayerA = 0.0f;
 	float fOldAngle = 0.01f;
 
-	int height = 16;
-	int width = 16;
+	int height = 31;
+	int width = 31;
 
 	int textureWidth = 32;
 	int textureHeight = 32;
 
 	float fFOV = (float) (Math.PI / 4.0f);
 
-	float fDepth = 16.0f;
+	float fDepth = 10.0f;
 
-	int nFactorX = 50; // Cuantas líneas horizontales por columna
-	int nFactorY = 30;
+	int nFactorX = 25; // Cuantas líneas horizontales por columna
+	int nFactorY = 15;
 
 	int screenWidth = width * nFactorX;
 	int screenHeight = height * nFactorY;
@@ -50,67 +52,100 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 
 	float techos[] = new float[screenWidth];
 	boolean bBoundary = false;
-	float fWallHeight = 3.0f;
-	float fStepSize = 0.025f;
+	float fWallHeight = 2.0f;
+	float fStepSize = 0.01f;
 	float fSampleX = 0.0f;
 
 	Thread render;
 
 	public Engine() {
-		mapa = "################";
-		mapa += "#    #     #   #";
-		mapa += "#### # ####### #";
-		mapa += "# #            #";
-		mapa += "# ###########  #";
-		mapa += "# #     #      #";
-		mapa += "# ####  #  #####";
-		mapa += "## #       #   #";
-		mapa += "#  ######  ##  #";
-		mapa += "#  #       #   #";
-		mapa += "#  # #######  ##";
-		mapa += "#  # #   #     #";
-		mapa += "#  #   #   #   #";
-		mapa += "#  ##########  #";
-		mapa += "#              #";
-		mapa += "################";
-
+//		mapa = "################";
+//		mapa += "#    #     #   #";
+//		mapa += "#### # ####### #";
+//		mapa += "# #            #";
+//		mapa += "# ###########  #";
+//		mapa += "# #     #      #";
+//		mapa += "# ####  #  #####";
+//		mapa += "## #       #   #";
+//		mapa += "#  ######  ##  #";
+//		mapa += "#  #       #   #";
+//		mapa += "#  # #######  ##";
+//		mapa += "#  # #   #     #";
+//		mapa += "#  #   #   #   #";
+//		mapa += "#  ##########  #";
+//		mapa += "#              #";
+//		mapa += "################";
 		
-		wallTexture =  "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		mapa = "###############################";
+		mapa+= "#           #       #         #";
+		mapa+= "####### ### # ##### # ####### #";
+		mapa+= "#       #     #   # #     #   #";
+		mapa+= "# ####### ##### ### ####### # #";
+		mapa+= "# #   #   #   #             # #";
+		mapa+= "# # # ##### # ############### #";
+		mapa+= "#   #       #   #           # #";
+		mapa+= "# ############# # ######### # #";
+		mapa+= "#   #     #   # #     #   # # #";
+		mapa+= "### ### # # # # ##### ### # # #";
+		mapa+= "#       # # #     # # #   # # #";
+		mapa+= "# ######### ##### # # # ### ###";
+		mapa+= "#   #       #       # #   #   #";
+		mapa+= "##### ############### ### ### #";
+		mapa+= "#     #                     # #";
+		mapa+= "# ### # ##################### #";
+		mapa+= "# #   #   #       #   #       #";
+		mapa+= "# ### ### # ##### # # # ##### #";
+		mapa+= "#   #   # # #   #   # #     # #";
+		mapa+= "# # ##### # # # # ######### # #";
+		mapa+= "# #   #   # # # # #   #   # # #";
+		mapa+= "# ### # ### # # ### # ### # ###";
+		mapa+= "# # # # #     #     # #   #   #";
+		mapa+= "# # # # ############# # ##### #";
+		mapa+= "# # #   #   #     #   # #     #";
+		mapa+= "# # ##### # # ### # # # ### # #";
+		mapa+= "#     #   #   #   # # #   # # #";
+		mapa+= "##### # ####### ### # ### ### #";
+		mapa+= "#       #           #   #     #";
+		mapa+= "###############################";
+		
+
+		wallTexture =  "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "RBRRRRBRRRRBRRRRBRRRRBRRRRBRRRRB";
-		wallTexture += "RBRRRRBRRRRBRRRRBRRRRBRRRRBRRRRB";
-		wallTexture += "RBRRRRBRRRRBRRRRBRRRRBRRRRBRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
-		wallTexture += "RBRRRBRRRBRRRBRRRBRRRBRRRBRRRBRR";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
+		wallTexture += "RRRRRRRBRRRRRRRBRRRRRRRBRRRRRRRB";
 		wallTexture += "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-		wallTexture += "BRRRBRRRBRRRBRRRBRRRBRRRBRRRBRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+		wallTexture += "RRRBRRRRRRRBRRRRRRRBRRRRRRRBRRRR";
+
 		this.setSize(width * nFactorX, height * nFactorY);
 		this.setVisible(true);
 		this.addKeyListener(this);
-
+		fPlayerA = (float)Math.random()*360;
 		// fPlayerA = 10.0f;
 		level = new BufferedImage(screenWidth, screenHeight, BufferedImage.TYPE_INT_RGB);
 		render = new Thread(this);
@@ -119,7 +154,8 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		lTime2 = System.nanoTime();
 
 		float[] color = Color.RGBtoHSB(138, 137, 137, null);
-		System.out.println("Color -> [ " + color[0] + ", " + color[1] + ", " + color[2] + " ]");
+		// System.out.println("Color -> [ " + color[0] + ", " + color[1] + ", "
+		// + color[2] + " ]");
 
 		// render.start();
 
@@ -170,17 +206,17 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		screenHeight = height * nFactorY;
 
 		Graphics2D big2d = (Graphics2D) level.getGraphics();
-		big2d.clearRect(0, 0, screenWidth, screenHeight);
-		// RenderingHints rh = new
-		// RenderingHints(RenderingHints.KEY_ANTIALIASING,
-		// RenderingHints.VALUE_ANTIALIAS_ON);
-		// big2d.setRenderingHints(rh);
-		big2d.setStroke(new BasicStroke(1f));
+		//big2d.clearRect(0, 0, screenWidth, screenHeight);
+//		 RenderingHints rh = new
+//		 RenderingHints(RenderingHints.KEY_ANTIALIASING,
+//		 RenderingHints.VALUE_ANTIALIAS_ON);
+//		 big2d.setRenderingHints(rh);
+		big2d.setStroke(new BasicStroke(0.75f));
 		// if (fPlayerA != fOldAngle) {
 		// fOldAngle = fPlayerA;
 		// float fDistanceToWall = 0.0f;
 
-		int separacion = 0;
+		//int separacion = 0;
 		for (int x = 0; x < screenWidth; x++) {
 			float fDistanceToWall = 0.0f;
 			// float fRayAngle = (fPlayerA - fFOV / 2.0f) + ((float) x / (float)
@@ -211,31 +247,31 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 
 						List<Point2D> esquinas = new LinkedList<>();
 
-						for (int tx = 0; tx < 2; tx++) {
-							for (int ty = 0; ty < 2; ty++) {
-								// Angle of corner to eye
-								float vy = (float) nTestY + ty - fPlayerY;
-								float vx = (float) nTestX + tx - fPlayerX;
-								float d = (float) Math.sqrt(vx * vx + vy * vy);
-								float dot = (fEyeX * vx / d) + (fEyeY * vy / d);
-								Point2D punto = new Point2D.Float(d, dot);
-								esquinas.add(punto);
-							}
-						}
+//						for (int tx = 0; tx < 2; tx++) {
+//							for (int ty = 0; ty < 2; ty++) {
+//								// Angle of corner to eye
+//								float vy = (float) nTestY + ty - fPlayerY;
+//								float vx = (float) nTestX + tx - fPlayerX;
+//								float d = (float) Math.sqrt(vx * vx + vy * vy);
+//								float dot = (fEyeX * vx / d) + (fEyeY * vy / d);
+//								Point2D punto = new Point2D.Float(d, dot);
+//								esquinas.add(punto);
+//							}
+//						}
 
-						Collections.sort(esquinas, new Comparator<Point2D>() {
-							public int compare(Point2D p1, Point2D p2) {
-								return Double.compare(p1.getX(), p2.getX());
-							}
-						});
-
-						float fBound = 0.001f;
-						if (Math.acos(esquinas.get(0).getY()) < fBound)
-							bBoundary = true;
-						if (Math.acos(esquinas.get(1).getY()) < fBound)
-							bBoundary = true;
-						if (Math.acos(esquinas.get(2).getY()) < fBound)
-							bBoundary = true;
+//						Collections.sort(esquinas, new Comparator<Point2D>() {
+//							public int compare(Point2D p1, Point2D p2) {
+//								return Double.compare(p1.getX(), p2.getX());
+//							}
+//						});
+//
+//						float fBound = 0.001f;
+//						if (Math.acos(esquinas.get(0).getY()) < fBound)
+//							bBoundary = true;
+//						if (Math.acos(esquinas.get(1).getY()) < fBound)
+//							bBoundary = true;
+//						if (Math.acos(esquinas.get(2).getY()) < fBound)
+//							bBoundary = true;
 
 						float fBlockMidX = (float) nTestX + 0.5f;
 						float fBlockMidY = (float) nTestY + 0.5f;
@@ -277,7 +313,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			for (int y = (int) nCeiling; y < screenHeight; y++) {
 
 				if (y >= nCeiling && y < nFloor) {
-					if (!bBoundary) {
+					//if (!bBoundary) {
 
 						if (fDistanceToWall < fDepth) {
 							float fSampleY = ((float) y - (float) nCeiling) / ((float) nFloor - (float) nCeiling);
@@ -300,9 +336,9 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 						// } else {
 						// big2d.setColor(Color.black);
 						// }
-					} else {
-						big2d.setColor(Color.black);
-					}
+//					} else {
+//						big2d.setColor(Color.black);
+//					}
 				} else {
 					// big2d.draw(wall);
 					// big2d.setColor(Color.GREEN);
@@ -334,18 +370,185 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 		g2d.drawImage(level, 0, 0, null);
 	}
 
+	public void renderizar() {
+		BufferedImage imagenes[];
+		ForkJoinPool fjp = new ForkJoinPool();
+		
+		
+		
+		//fjp.invokeAll(tasks, 2000, TimeUnit.MILLISECONDS)
+	}
+	
+	
+	public void render(int xi, int xf, BufferedImage auxImage) {
+		boolean bHitWall = false;
+
+		int screenWidth;
+		screenWidth = xf-xi;
+
+		auxImage = new BufferedImage(xf-xi, screenHeight, BufferedImage.TYPE_INT_RGB);
+		
+		Graphics2D big2d = (Graphics2D) auxImage.getGraphics();
+		big2d.setStroke(new BasicStroke(0.75f));
+
+		for (int x = xi; x < xf; x++) {
+			float fDistanceToWall = 0.0f;
+			float fRayAngle = (float) (fPlayerA
+					+ Math.atan((2.0f * (float) x / (float) screenWidth - 1.0f) * Math.tan(fFOV / 2.0f)));
+
+			float fEyeX = (float) Math.sin(fRayAngle);
+			float fEyeY = (float) Math.cos(fRayAngle);
+			bHitWall = false;
+			while (!bHitWall && fDistanceToWall < fDepth) {
+				fDistanceToWall += fStepSize;
+				bBoundary = false;
+				int nTestX = (int) (fPlayerX + fEyeX * fDistanceToWall);
+				int nTestY = (int) (fPlayerY + fEyeY * fDistanceToWall);
+
+				if (nTestX < 0 || nTestX >= width || nTestY < 0 || nTestY >= height) {
+					bHitWall = true;
+					fDistanceToWall = fDepth;
+				} else {
+					if (mapa.charAt(nTestY * width + nTestX) == '#') {
+						bHitWall = true;
+
+						// Busco las esquinas para resaltarlas
+
+						List<Point2D> esquinas = new LinkedList<>();
+
+//						for (int tx = 0; tx < 2; tx++) {
+//							for (int ty = 0; ty < 2; ty++) {
+//								// Angle of corner to eye
+//								float vy = (float) nTestY + ty - fPlayerY;
+//								float vx = (float) nTestX + tx - fPlayerX;
+//								float d = (float) Math.sqrt(vx * vx + vy * vy);
+//								float dot = (fEyeX * vx / d) + (fEyeY * vy / d);
+//								Point2D punto = new Point2D.Float(d, dot);
+//								esquinas.add(punto);
+//							}
+//						}
+
+//						Collections.sort(esquinas, new Comparator<Point2D>() {
+//							public int compare(Point2D p1, Point2D p2) {
+//								return Double.compare(p1.getX(), p2.getX());
+//							}
+//						});
+//
+//						float fBound = 0.001f;
+//						if (Math.acos(esquinas.get(0).getY()) < fBound)
+//							bBoundary = true;
+//						if (Math.acos(esquinas.get(1).getY()) < fBound)
+//							bBoundary = true;
+//						if (Math.acos(esquinas.get(2).getY()) < fBound)
+//							bBoundary = true;
+
+						float fBlockMidX = (float) nTestX + 0.5f;
+						float fBlockMidY = (float) nTestY + 0.5f;
+
+						float fTestPointX = fPlayerX + fEyeX * fDistanceToWall;
+						float fTestPointY = fPlayerY + fEyeY * fDistanceToWall;
+
+						float fTestAngle = (float) Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
+
+						if (fTestAngle >= -3.14159f * 0.25f && fTestAngle < 3.14159f * 0.25f)
+							fSampleX = fTestPointY - (float) nTestY;
+						if (fTestAngle >= 3.14159f * 0.25f && fTestAngle < 3.14159f * 0.75f)
+							fSampleX = fTestPointX - (float) nTestX;
+						if (fTestAngle < -3.14159f * 0.25f && fTestAngle >= -3.14159f * 0.75f)
+							fSampleX = fTestPointX - (float) nTestX;
+						if (fTestAngle >= 3.14159f * 0.75f || fTestAngle < -3.14159f * 0.75f)
+							fSampleX = fTestPointY - (float) nTestY;
+
+					}
+				}
+			}
+
+			// int nCeiling = (int)(screenHeight / 2.0f - screenHeight /
+			// fDistanceToWall);
+			float fDistance = ((fEyeX * (float) Math.sin(fPlayerA)) + (fEyeY * (float) Math.cos(fPlayerA)))
+					* fDistanceToWall;
+			float nCeiling = (((float) screenHeight / fWallHeight) * (1.0f - 1.0f / fDistance));
+			float nFloor = screenHeight - nCeiling;
+			techos[x] = nCeiling;
+
+			Line2D ceiling = new Line2D.Float(x, 0, x, nCeiling);
+			Line2D wall = new Line2D.Float(x, nCeiling, x, nFloor);
+
+			// Line2D floor = new Line2D.Float(x,nFloor,x,screenHeight);
+
+			big2d.setColor(Color.black);
+			big2d.draw(ceiling);
+			bBoundary = false;
+			for (int y = (int) nCeiling; y < screenHeight; y++) {
+
+				if (y >= nCeiling && y < nFloor) {
+					//if (!bBoundary) {
+
+						if (fDistanceToWall < fDepth) {
+							float fSampleY = ((float) y - (float) nCeiling) / ((float) nFloor - (float) nCeiling);
+							big2d.setColor(getSampleColour(fSampleX, fSampleY));
+							// System.out.println("fSampleX: " + fSampleX + " |
+							// fSampleY: " + fSampleY);
+						} else {
+							big2d.setColor(Color.black);
+						}
+						big2d.drawLine(x, y, x, y);
+
+						// if (fDistanceToWall <= fDepth / 4.0f ) { //Very close
+						// big2d.setColor(Color.white);
+						// } else if (fDistanceToWall < fDepth / 3.0f) {
+						// big2d.setColor(Color.lightGray);
+						// } else if (fDistanceToWall < fDepth / 2.0f) {
+						// big2d.setColor(Color.gray);
+						// } else if (fDistanceToWall < fDepth ){
+						// big2d.setColor(Color.darkGray);
+						// } else {
+						// big2d.setColor(Color.black);
+						// }
+//					} else {
+//						big2d.setColor(Color.black);
+//					}
+				} else {
+					// big2d.draw(wall);
+					// big2d.setColor(Color.GREEN);
+					// big2d.draw(floor);
+					// for (int y=(int)nFloor; y<screenHeight; y++ ) {
+					float b = 1.0f - (((float) y - screenHeight / 2.0f) / ((float) screenHeight / 2.0f));
+					if (b < 0.25) {
+						big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 1.0f));
+					} else if (b < 0.5) {
+						big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.70f));
+					} else if (b < 0.75) {
+						big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.60f));
+					} else if (b < 0.9) {
+						big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.50f));
+					} else {
+						big2d.setColor(Color.getHSBColor(0.29190207f, 0.99f, 0.40f));
+					}
+					big2d.drawLine(x, y, x, y);
+				}
+			}
+
+		}
+
+
+		//return auxImage;
+	}
+	
+	
 	private void update() {
 
 	}
 
 	@Override
 	public void update(Graphics g) {
-		paintComponent(g);
+		// paintComponent(g);
 	}
 
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub
-
+		//invokeAll();
+		ForkJoinPool fjp;
 	}
 
 	public void keyPressed(KeyEvent e) {
@@ -383,13 +586,16 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			fFOV -= 0.1;
 		}
 		if (e.getKeyCode() == 106) { // Numpad *
-			fStepSize += 0.01;
+			fStepSize += 0.001;
 		}
 		if (e.getKeyCode() == 111) { // Numpad /
-			fStepSize -= 0.01;
+			fStepSize -= 0.001;
+			if (fStepSize < 0 ) {
+				fStepSize += 0.001;
+			}
 		}
-		System.out.println("FOV: " + fFOV);
-		System.out.println("fStepSize: " + fStepSize);
+		//System.out.println("FOV: " + fFOV);
+		//System.out.println("fStepSize: " + fStepSize);
 
 		// System.out.println(e.getKeyCode());
 		repaint();
@@ -467,7 +673,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 	}
 
 	public void run() {
-		while (true) {
+		//while (true) {
 
 			lTime2 = System.nanoTime();
 			fElapsedTime = (lTime2 - lTime1) / 100000000.0f;
@@ -492,7 +698,7 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			for (int x = 0; x < screenWidth; x++) {
 				float fDistanceToWall = 0.0f;
 				float fRayAngle = (fPlayerA - fFOV / 2.0f) + ((float) x / (float) screenWidth) * fFOV;
-				System.out.println("fRayAngle: " + fRayAngle);
+				//System.out.println("fRayAngle: " + fRayAngle);
 				float fStepSize = 0.1f;
 				// fDistanceToWall = 0.0f;
 
@@ -554,11 +760,11 @@ public class Engine extends JPanel implements KeyListener, Runnable {
 			Graphics2D g2d = (Graphics2D) this.getGraphics();
 			g2d.drawImage(level, 0, 0, screenWidth, screenHeight, this);
 
-			System.out.println("Altura techos:");
-			for (int i = 0; i < techos.length; i++) {
-				System.out.print(techos[i] + " | ");
-			}
+			//System.out.println("Altura techos:");
+//			for (int i = 0; i < techos.length; i++) {
+//				System.out.print(techos[i] + " | ");
+//			}
 
-		}
+		//}
 	}
 }
